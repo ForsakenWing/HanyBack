@@ -1,0 +1,44 @@
+version: "3.4"
+
+services:
+  postgres:
+    image: postgres
+    restart: always
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+  hanyback:
+    image: hanyback
+    secrets:
+      - source: secrets
+        target: /.env
+        mode: 0444
+    depends_on:
+      - postgres
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    ports:
+      - 5002:5002
+      - 5678:5678
+    links:
+      - postgres
+    volumes:
+      - ./files/:/app/files/
+    stop_signal: SIGINT
+    command: ["sh", "-c", "pip install debugpy -t /tmp && python /tmp/debugpy --wait-for-client --listen 0.0.0.0:5678 -m flask run --no-reload --host 0.0.0.0 --port 5002 --debug"]
+    environment:
+      - FLASK_APP=app.py
+    env_file:
+      - ./.env
+
+volumes:
+  pgdata:
+
+secrets:
+  secrets:
+    file: ./.env

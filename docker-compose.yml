@@ -1,0 +1,30 @@
+version: "3.4"
+
+services:
+  postgres:
+    image: postgres
+    restart: always
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+  hanyback:
+    image: hanyback
+    depends_on:
+      - postgres
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    ports:
+      - 5002:5002
+    links:
+      - postgres
+    volumes:
+      - ./files/:/app/files/
+    stop_signal: SIGINT
+
+volumes:
+  pgdata:
